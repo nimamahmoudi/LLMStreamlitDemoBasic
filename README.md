@@ -36,4 +36,4 @@ You can add your secrets to `.streamlit/secrets.toml` in the following format:
 OPENAI_API_KEY = "sk-..."
 ```
 
-For more detail about this code, you can follow the blog posts in my [website](https://blog.nima-dev.com).
+For more detail about this code, you can follow [my blog posts](https://medium.com/@nima.mahmoudi).
