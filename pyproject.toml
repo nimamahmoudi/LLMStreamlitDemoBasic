@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "llm-streamlit-demo-basic"
+version = "0.1.0"
+description = ""
+authors = ["Nima Mahmoudi <nima.mahmoudi.w@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = ">=3.10.0,<3.11"
+langchain = "^0.0.321"
+openai = "^0.28.1"
+streamlit = "^1.27.2"
+faiss-cpu = "^1.7.4"
+tiktoken = "^0.5.1"
+langchainhub = "^0.1.13"
+
+[tool.pyright]
+# https://github.com/microsoft/pyright/blob/main/docs/configuration.md
+useLibraryCodeForTypes = true
+exclude = [".cache"]
+
+[tool.ruff]
+# https://beta.ruff.rs/docs/configuration/
+select = ['E', 'W', 'F', 'I', 'B', 'C4', 'ARG', 'SIM']
+ignore = ['W291', 'W292', 'W293']
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
