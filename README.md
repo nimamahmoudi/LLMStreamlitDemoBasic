@@ -36,4 +36,10 @@ You can add your secrets to `.streamlit/secrets.toml` in the following format:
 OPENAI_API_KEY = "sk-..."
 ```
 
+Then, you can run the code using the following command:
+
+```sh
+streamlit run app.py
+```
+
 For more detail about this code, you can follow [my blog posts](https://medium.com/@nima.mahmoudi).
