@@ -2,11 +2,24 @@
 
 ## Installation Process
 
-### With Poetry
+### Without Poetry
+
+You can use conda to install the required packages:
+
+```sh
+conda create -n p311-llm python=3.11
+conda activate p311-llm
+pip install -r requirements.txt
+```
+
+### With Poetry (optional)
 
 To install the required packages, you can install them using poetry:
 
 ```sh
+# (optional) to set poetry to use the project folder
+# poetry config virtualenvs.in-project true
+# install all dependencies
 poetry install
 ```
 
@@ -16,14 +29,10 @@ In case you changed requirements.txt, you'll need to run the following command t
 cat requirements.txt | xargs poetry add
 ```
 
-### Without Poetry
-
-You can use conda to install the required packages:
+You can then enable poetry shell:
 
 ```sh
-conda create -n p311-llm python=3.11
-conda activate p311-llm
-pip install -r requirements.txt
+poetry shell
 ```
 
 ## Running the App
