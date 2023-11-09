@@ -153,3 +153,5 @@ cython_debug/
 
 
 .streamlit/secrets.toml
+index/*.faiss
+index/*.pkl
