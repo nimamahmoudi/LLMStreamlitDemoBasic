@@ -12,6 +12,7 @@ streamlit = "^1.27.2"
 faiss-cpu = "^1.7.4"
 tiktoken = "^0.5.1"
 langchainhub = "^0.1.13"
+pypdf = "^3.17.0"
 
 [tool.pyright]
 # https://github.com/microsoft/pyright/blob/main/docs/configuration.md
