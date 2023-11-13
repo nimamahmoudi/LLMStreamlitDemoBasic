@@ -1,5 +1,7 @@
 # LLM Streamlit Demo (Basic)
 
+- [Live Demo](https://llmappdemobasic.streamlit.app/)
+
 ## Installation Process
 
 ### Without Poetry
