@@ -9,7 +9,7 @@ if os.path.exists(secrets_file_path):
         if "OPENAI_API_KEY" in st.secrets:
             os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
         else:
-            print("OpenAI API Key found in environment variables")
+            print("OpenAI API Key not found in environment variables")
     except FileNotFoundError:
         print('Secrets file not found')
 else:
