@@ -29,12 +29,12 @@ else:
             st.sidebar.error(e)
             st.sidebar.error("Failed to embed documents.")
 
+# create the app
+st.title("Welcome to NimaGPT")
+
 chosen_file = st.radio(
     "Choose a file to search", embed_pdf.get_all_index_files(), index=0
 )
-
-# create the app
-st.title("Welcome to NimaGPT")
 
 # check if openai api key is set
 if not os.getenv('OPENAI_API_KEY', '').startswith("sk-"):
@@ -42,9 +42,18 @@ if not os.getenv('OPENAI_API_KEY', '').startswith("sk-"):
     st.stop()
 
 # load the agent
-from llm_helper import convert_message, get_rag_chain
+from llm_helper import convert_message, get_rag_chain, get_rag_fusion_chain
 
-custom_chain = get_rag_chain(chosen_file)
+rag_method_map = {
+    'Basic RAG': get_rag_chain,
+    'RAG Fusion': get_rag_fusion_chain
+}
+chosen_rag_method = st.radio(
+    "Choose a RAG method", rag_method_map.keys(), index=0
+)
+get_rag_chain_func = rag_method_map[chosen_rag_method]
+## get the chain WITHOUT the retrieval callback (not used)
+# custom_chain = get_rag_chain_func(chosen_file)
 
 # create the message history state
 if "messages" not in st.session_state:
@@ -66,8 +75,27 @@ if prompt:
 
     # render the assistant's response
     with st.chat_message("assistant"):
+        retrival_container = st.container()
         message_placeholder = st.empty()
 
+        retrieval_status = retrival_container.status("**Context Retrieval**")
+        queried_questions = []
+        rendered_questions = set()
+        def update_retrieval_status():
+            for q in queried_questions:
+                if q in rendered_questions:
+                    continue
+                rendered_questions.add(q)
+                retrieval_status.markdown(f"\n\n`- {q}`")
+        def retrieval_cb(qs):
+            for q in qs:
+                if q not in queried_questions:
+                    queried_questions.append(q)
+            return qs
+        
+        # get the chain with the retrieval callback
+        custom_chain = get_rag_chain_func(chosen_file, retrieval_cb=retrieval_cb)
+        
         if "messages" in st.session_state:
             chat_history = [convert_message(m) for m in st.session_state.messages[:-1]]
         else:
@@ -83,6 +111,9 @@ if prompt:
                 full_response += response.content
 
             message_placeholder.markdown(full_response + "▌")
+            update_retrieval_status()
+
+        retrieval_status.update(state="complete")
         message_placeholder.markdown(full_response)
 
     # add the full response to the message history
