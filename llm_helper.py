@@ -104,7 +104,8 @@ def get_rag_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index"
 
 
 # RAG fusion chain
-# source: https://youtu.be/GchC5WxeXGc?si=6i7J0rPZI7SNwFYZ
+# source1: https://youtu.be/GchC5WxeXGc?si=6i7J0rPZI7SNwFYZ
+# source2: https://towardsdatascience.com/forget-rag-the-future-is-rag-fusion-1147298d8ad1
 def reciprocal_rank_fusion(results: list[list], k=60):
     from langchain.load import dumps, loads
     fused_scores = {}
