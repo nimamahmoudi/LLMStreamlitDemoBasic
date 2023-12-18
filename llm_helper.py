@@ -185,6 +185,68 @@ def get_rag_fusion_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder=
     conversational_qa_chain = _inputs | _context | ANSWER_PROMPT | ChatOpenAI()
     return conversational_qa_chain
 
+
+####################
+# Adding agent chain with OpenAI function calling
+
+def get_search_tool_from_index(search_index):
+    from langchain.agents import tool
+    @tool
+    def search(query: str) -> str:
+        """Search the contents of the source document for the queries."""
+
+        docs = search_index.similarity_search(query, k=5)
+        return format_docs(docs)
+    
+    return search
+
+def get_lc_oai_tools(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index"):
+    from langchain.tools.render import format_tool_to_openai_tool
+    search_index = get_search_index(file_name, index_folder)
+    lc_tools = [get_search_tool_from_index(search_index=search_index)]
+    oai_tools = [format_tool_to_openai_tool(t) for t in lc_tools]
+    return lc_tools, oai_tools
+
+def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index", callbacks=None):
+    if callbacks is None:
+        callbacks = []
+
+    from langchain.agents import initialize_agent, AgentType
+    from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+    from langchain.agents.format_scratchpad.openai_tools import (
+        format_to_openai_tool_messages,
+    )
+    from langchain.agents import AgentExecutor
+    from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
+
+    lc_tools, oai_tools = get_lc_oai_tools(file_name, index_folder)
+    
+
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are a helpful assistant, use the search tool to answer the user's question and cite only the page number when you use information coming (like [p1]) from the source document."),
+            ("user", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ]
+    )
+    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-1106")
+
+    agent = (
+        {
+            "input": lambda x: x["input"],
+            "agent_scratchpad": lambda x: format_to_openai_tool_messages(
+                x["intermediate_steps"]
+            ),
+        }
+        | prompt
+        | llm.bind(tools=oai_tools)
+        | OpenAIToolsAgentOutputParser()
+    )
+
+    agent_executor = AgentExecutor(agent=agent, tools=lc_tools, verbose=True, callbacks=callbacks)
+    return agent_executor
+
+
 if __name__ == "__main__":
     question_generation_chain = get_search_query_generation_chain()
     print('='*50)
@@ -200,3 +262,10 @@ if __name__ == "__main__":
     print('RAG Fusion Chain')
     chain = get_rag_fusion_chain()
     print(chain.invoke({'input': 'serverless computing', 'chat_history': []}))
+
+    agent_executor = get_agent_chain()
+    print(
+        agent_executor.invoke(
+            {"input": "based on the source document, compare FaaS with BaaS??"}
+        )
+    )
