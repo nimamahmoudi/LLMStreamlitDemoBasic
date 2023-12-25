@@ -40,18 +40,17 @@ if prompt := st.chat_input(placeholder="Who won the Women's U.S. Open in 2018?")
     lc_tools, _ = get_lc_oai_tools()
     search_agent = initialize_agent(lc_tools, llm, agent=AgentType.OPENAI_FUNCTIONS, handle_parsing_errors=True, verbose=True)
 
-    prompt = ChatPromptTemplate.from_messages(
+    agent_prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", "You are a helpful assistant, use the search tool to answer the user's question and cite only the page number when you use information coming (like [p1]) from the source document. Always use the content from the source document to answer the user's question."),
+            ("system", "You are a helpful assistant, use the search tool to answer the user's question and cite only the page number when you use information coming (like [p1]) from the source document. Always use the content from the source document to answer the user's question. If you need to compare multiple subjects, search them one by one."),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
-    search_agent.agent.prompt = prompt
+    search_agent.agent.prompt = agent_prompt
     with st.chat_message("assistant"):
         st_cb = StreamlitCallbackHandler(st.container(), expand_new_thoughts=False)
-        response = search_agent.run(st.session_state.messages, callbacks=[st_cb])
-
+        response = search_agent.run(prompt, callbacks=[st_cb])
         # search_agent = get_agent_chain(callbacks=[st_cb])
         # response = search_agent.invoke({"input": prompt})
         # response = response["output"]

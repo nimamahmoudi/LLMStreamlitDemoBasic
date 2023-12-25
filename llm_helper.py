@@ -75,6 +75,16 @@ def _format_chat_history(chat_history):
 
     return "\n".join([format_single_chat_message(m) for m in chat_history])
 
+def get_standalone_question_from_chat_history_chain():
+    _inputs = RunnableMap(
+        standalone_question=RunnablePassthrough.assign(
+            chat_history=lambda x: _format_chat_history(x["chat_history"])
+        )
+        | CONDENSE_QUESTION_PROMPT
+        | ChatOpenAI(temperature=0)
+        | StrOutputParser(),
+    )
+    return _inputs
 
 def get_rag_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index", retrieval_cb=None):
     vectorstore = get_search_index(file_name, index_folder)
@@ -224,7 +234,7 @@ def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="inde
 
     prompt = ChatPromptTemplate.from_messages(
         [
-            ("system", "You are a helpful assistant, use the search tool to answer the user's question and cite only the page number when you use information coming (like [p1]) from the source document."),
+            ("system", "You are a helpful assistant, use the search tool to answer the user's question and cite only the page number when you use information coming (like [p1]) from the source document.\nchat history: {chat_history}"),
             ("user", "{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
@@ -237,6 +247,7 @@ def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="inde
             "agent_scratchpad": lambda x: format_to_openai_tool_messages(
                 x["intermediate_steps"]
             ),
+            "chat_history": lambda x: _format_chat_history(x["chat_history"]),
         }
         | prompt
         | llm.bind(tools=oai_tools)
@@ -265,7 +276,8 @@ if __name__ == "__main__":
 
     agent_executor = get_agent_chain()
     print(
-        agent_executor.invoke(
-            {"input": "based on the source document, compare FaaS with BaaS??"}
-        )
+        agent_executor.invoke({
+            "input": "based on the source document, compare FaaS with BaaS??",
+            "chat_history": [],
+        })
     )
