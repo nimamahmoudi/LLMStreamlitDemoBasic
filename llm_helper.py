@@ -1,3 +1,5 @@
+from typing import Optional
+
 # langchain imports
 from langchain.chat_models import ChatOpenAI
 from langchain.schema.runnable import RunnableMap
@@ -7,6 +9,7 @@ from langchain.schema.runnable import RunnablePassthrough
 from langchain.schema.output_parser import StrOutputParser
 from operator import itemgetter
 from langchain.schema.messages import HumanMessage, SystemMessage, AIMessage
+from langchain.callbacks.streamlit.streamlit_callback_handler import StreamlitCallbackHandler
 
 
 def format_docs(docs):
@@ -199,9 +202,12 @@ def get_rag_fusion_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder=
 ####################
 # Adding agent chain with OpenAI function calling
 
-def get_search_tool_from_index(search_index):
+def get_search_tool_from_index(search_index, st_cb: Optional[StreamlitCallbackHandler] = None, ):
     from langchain.agents import tool
+    from agent_helper import retry_and_streamlit_callback
+
     @tool
+    @retry_and_streamlit_callback(st_cb=st_cb, tool_name="Content Seach Tool")
     def search(query: str) -> str:
         """Search the contents of the source document for the queries."""
 
@@ -210,14 +216,14 @@ def get_search_tool_from_index(search_index):
     
     return search
 
-def get_lc_oai_tools(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index"):
+def get_lc_oai_tools(file_name:str = "Mahmoudi_Nima_202202_PhD.pdf", index_folder: str = "index", st_cb: Optional[StreamlitCallbackHandler] = None, ):
     from langchain.tools.render import format_tool_to_openai_tool
     search_index = get_search_index(file_name, index_folder)
-    lc_tools = [get_search_tool_from_index(search_index=search_index)]
+    lc_tools = [get_search_tool_from_index(search_index=search_index, st_cb=st_cb)]
     oai_tools = [format_tool_to_openai_tool(t) for t in lc_tools]
     return lc_tools, oai_tools
 
-def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index", callbacks=None):
+def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="index", callbacks=None, st_cb: Optional[StreamlitCallbackHandler] = None, ):
     if callbacks is None:
         callbacks = []
 
@@ -229,7 +235,7 @@ def get_agent_chain(file_name="Mahmoudi_Nima_202202_PhD.pdf", index_folder="inde
     from langchain.agents import AgentExecutor
     from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
 
-    lc_tools, oai_tools = get_lc_oai_tools(file_name, index_folder)
+    lc_tools, oai_tools = get_lc_oai_tools(file_name, index_folder, st_cb)
     
 
     prompt = ChatPromptTemplate.from_messages(
